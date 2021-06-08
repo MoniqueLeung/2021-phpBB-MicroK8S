@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: phpbb
+  labels:
+    app: phpbb
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: phpbb
+    tier: frontend
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: phpbb-pv-claim
+  labels:
+    app: phpbb
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phpbb
+  labels:
+    app: phpbb
+spec:
+  selector:
+    matchLabels:
+      app: phpbb
+      tier: frontend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: phpbb
+        tier: frontend
+    spec:
+      containers:
+      - image: phpbb:3-alpine
+        name: phpbb
+        env:
+        - name: PHPBB_DB_HOST
+          value: phpbb-mysql
+        - name: PHPBB_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        ports:
+        - containerPort: 80
+          name: phpbb
+        volumeMounts:
+        - name: phpbb-persistent-storage
+          mountPath: /var/www/html
+      volumes:
+      - name: phpbb-persistent-storage
+        persistentVolumeClaim:
+          claimName: phpbb-pv-claim
