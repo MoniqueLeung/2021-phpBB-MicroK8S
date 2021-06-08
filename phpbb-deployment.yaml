@@ -45,7 +45,7 @@ spec:
         tier: frontend
     spec:
       containers:
-      - image: phpbb:3
+      - image: phpbb:3.3.4-debian-10-r33
         name: phpbb
         env:
         - name: PHPBB_DB_HOST
